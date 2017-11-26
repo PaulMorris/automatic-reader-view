@@ -106,16 +106,16 @@ async function handleInstall(details) {
         defaults = {};
 
     if (storage.oReaderUrls === undefined) {
-        defaults["oReaderUrls"] = [];
+        defaults.oReaderUrls = [];
     }
     if (storage.oNonReaderUrls === undefined) {
-        defaults["oNonReaderUrls"] = [];
+        defaults.oNonReaderUrls = [];
     }
     if (storage.oOpenAllInReader === undefined) {
-        defaults["oOpenAllInReader"] = false;
+        defaults.oOpenAllInReader = false;
     }
     if (storage.readerTabs === undefined) {
-        defaults["readerTabs"] = {};
+        defaults.readerTabs = {};
     }
     STORAGE.set(defaults);
 }

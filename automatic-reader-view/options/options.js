@@ -30,15 +30,15 @@ function cleanUpSiteList(siteList) {
     }
     // Convert set to an array.
     return [...newitems];
-};
+}
 
 function getAndUpdateSiteList(selector) {
     let element = document.querySelector(selector),
         sitesArray = cleanUpSiteList(element.value);
 
-    element["value"] = sitesArray.join(", ") || "";
+    element.value = sitesArray.join(", ") || "";
     return sitesArray;
-};
+}
 
 function saveOptions(event) {
     event.preventDefault();
@@ -47,20 +47,20 @@ function saveOptions(event) {
         oNonReaderUrls: getAndUpdateSiteList("#oNonReaderUrls"),
         oOpenAllInReader: document.querySelector("#oOpenAllInReader").checked || false
     });
-};
+}
 
 document.querySelector("form").addEventListener("change", saveOptions);
 
 async function restoreOptions() {
     try {
         let options = await STORAGE.get(OPTIONS);
-        document.querySelector("#oReaderUrls")["value"] = options.oReaderUrls.join(', ') || "";
-        document.querySelector("#oNonReaderUrls")["value"] = options.oNonReaderUrls.join(', ') || "";
+        document.querySelector("#oReaderUrls").value = options.oReaderUrls.join(', ') || "";
+        document.querySelector("#oNonReaderUrls").value = options.oNonReaderUrls.join(', ') || "";
         document.querySelector("#oOpenAllInReader").checked = options.oOpenAllInReader || false;
 
     } catch (e) {
         console.error(e);
     }
-};
+}
 
 document.addEventListener('DOMContentLoaded', restoreOptions);
