@@ -62,10 +62,14 @@ async function handleTabUpdated(tabId, changeInfo, tab) {
         // If the user exited reader view, do not re-enter reader view.
         if (storage.readerTabs[tabId] !== url) {
 
-            if (containsUrl(storage.oReaderUrls, url) ||
-                (storage.oOpenAllInReader &&
-                    !containsUrl(storage.oNonReaderUrls, url))) {
-                browser.tabs.toggleReaderMode(tabId);
+            if (storage.oOpenAllInReader) {
+                if (!containsUrl(storage.oNonReaderUrls, url)) {
+                    browser.tabs.toggleReaderMode(tabId);
+                }
+            } else {
+                if (containsUrl(storage.oReaderUrls, url)) {
+                    browser.tabs.toggleReaderMode(tabId);
+                }
             }
         }
     }
