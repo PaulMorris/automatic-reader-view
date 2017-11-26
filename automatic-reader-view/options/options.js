@@ -5,6 +5,11 @@
 "use strict";
 
 const STORAGE = browser.storage.local;
+const OPTIONS = [
+    "readerSitesPref",
+    "nonReaderSitesPref",
+    "openAllSitesInReaderPref"
+];
 
 // Takes a comma separated string of sites (from a pref) and returns
 // a cleaned up string.  Trims whitespace, removes empty items, etc.
@@ -37,11 +42,9 @@ function getAndUpdateSiteList(selector) {
 
 function saveOptions(event) {
     event.preventDefault();
-    let readerSitesPref = getAndUpdateSiteList("#readerSitesPref"),
-        nonReaderSitesPref = getAndUpdateSiteList("#nonReaderSitesPref");
     STORAGE.set({
-        readerSitesPref: readerSitesPref,
-        nonReaderSitesPref: nonReaderSitesPref,
+        readerSitesPref: getAndUpdateSiteList("#readerSitesPref"),
+        nonReaderSitesPref: getAndUpdateSiteList("#nonReaderSitesPref"),
         openAllSitesInReaderPref: document.querySelector("#openAllSitesInReaderPref").checked || false
     });
 };
@@ -50,17 +53,10 @@ document.querySelector("form").addEventListener("submit", saveOptions);
 
 async function restoreOptions() {
     try {
-        let background = browser.extension.getBackgroundPage(),
-            options = await STORAGE.get(background.OPTIONS);
-        if (options.readerSitesPref) {
-            document.querySelector("#readerSitesPref")["value"] = options.readerSitesPref.join(', ') || "";
-        }
-        if (options.nonReaderSitesPref) {
-            document.querySelector("#nonReaderSitesPref")["value"] = options.nonReaderSitesPref.join(', ') || "";
-        }
-        if (options.openAllSitesInReaderPref) {
-            document.querySelector("#openAllSitesInReaderPref").checked = options.openAllSitesInReaderPref || false;
-        }
+        let options = await STORAGE.get(OPTIONS);
+        document.querySelector("#readerSitesPref")["value"] = options.readerSitesPref.join(', ') || "";
+        document.querySelector("#nonReaderSitesPref")["value"] = options.nonReaderSitesPref.join(', ') || "";
+        document.querySelector("#openAllSitesInReaderPref").checked = options.openAllSitesInReaderPref || false;
 
     } catch (e) {
         console.error(e);

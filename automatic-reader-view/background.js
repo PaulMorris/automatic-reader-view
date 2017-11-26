@@ -7,21 +7,16 @@
 'use strict';
 
 const STORAGE = browser.storage.local;
-const OPTIONS = [
-    "readerSitesPref",
-    "nonReaderSitesPref",
-    "openAllSitesInReaderPref"
-];
 
-// readerModeTabs: Stores tab.id and url as key/value pairs for
-// all tabs currently in reader view mode (the stored url is sanitized
-// and does not begin with 'about:reader?url=').  This lets us handle two cases.
+// readerModeTabs: Stores tab.id and clean url as key/value pairs for
+// all tabs currently in reader view mode (the stored url does not begin
+// with 'about:reader?url=' or 'http://' or 'https://').  This lets us handle
+// two cases.
 // 1. When a tab is in reader view and the user clicks to get out
 // of it.  In that case we do not convert back to reader view.
-// 2. If the tab is in reader view and the user loads another url
-// that should be loaded in reader view.  This is why it is a Map and not a Set
+// 2. If the tab is in reader view and the user loads another url that should
+// be loaded in reader view.  This is why it is a mapping and not simply a set
 // of tab ids, so two back-to-back auto-reader-view pages will work correctly.
-let readerModeTabs = new Map();
 
 function cleanUrl(url) {
     // remove 'about:reader?url=' from RV urls and unescape ':' '/' etc.
@@ -42,23 +37,27 @@ async function handleTabUpdated(tabId, changeInfo, tab) {
     // 'loading' can occur more than once for the same url/tab
     // so we use 'complete' which happens only once.
     if (changeInfo.status === 'complete') {
+        let storage = await STORAGE.get("readerModeTabs");
         if (tab.isInReaderMode) {
-            readerModeTabs.set(tabId, cleanUrl(tab.url));
+            storage.readerModeTabs[tabId] = cleanUrl(tab.url);
         } else {
-            readerModeTabs.delete(tabId);
+            delete storage.readerModeTabs[tabId];
         }
+        await STORAGE.set({
+            "readerModeTabs": storage.readerModeTabs
+        });
     }
 
     if (changeInfo.isArticle && !tab.isInReaderMode) {
-        const url = cleanUrl(tab.url);
+        const url = cleanUrl(tab.url),
+            storage = await STORAGE.get();
 
         // If the user exited reader view, do not re-enter reader view.
-        if (readerModeTabs.get(tabId) !== url) {
-            let options = await STORAGE.get(OPTIONS);
+        if (storage.readerModeTabs[tabId] !== url) {
 
-            if (containsUrl(options.readerSitesPref, url) ||
-                (options.openAllSitesInReaderPref &&
-                    !containsUrl(options.nonReaderSitesPref, url))) {
+            if (containsUrl(storage.readerSitesPref, url) ||
+                (storage.openAllSitesInReaderPref &&
+                    !containsUrl(storage.nonReaderSitesPref, url))) {
                 browser.tabs.toggleReaderMode(tabId);
             }
         }
@@ -71,3 +70,27 @@ browser.tabs.onUpdated.addListener(handleTabUpdated);
 browser.tabs.onRemoved.addListener((tabId, removeInfo) => {
     readerModeTabs.delete(tabId);
 });
+
+async function handleInstalled(details) {
+    // Initialize storage on initial install.
+    if (details.reason === 'install') {
+        let storage = await STORAGE.get(),
+            defaults = {};
+
+        if (storage.readerSitesPref === undefined) {
+            defaults["readerSitesPref"] = [];
+        }
+        if (storage.nonReaderSitesPref === undefined) {
+            defaults["nonReaderSitesPref"] = [];
+        }
+        if (storage.openAllSitesInReaderPref === undefined) {
+            defaults["openAllSitesInReaderPref"] = false;
+        }
+        if (storage.readerModeTabs === undefined) {
+            defaults["readerModeTabs"] = {};
+        }
+        STORAGE.set(defaults);
+    }
+};
+
+browser.runtime.onInstalled.addListener(handleInstalled);
