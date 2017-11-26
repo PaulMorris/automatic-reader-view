@@ -6,6 +6,13 @@
 
 'use strict';
 
+const STORAGE = browser.storage.local;
+const OPTIONS = [
+    "readerSitesPref",
+    "nonReaderSitesPref",
+    "openAllSitesInReaderPref"
+];
+
 // readerModeTabs: Stores tab.id and url as key/value pairs for
 // all tabs currently in reader view mode (the stored url is sanitized
 // and does not begin with 'about:reader?url=').  This lets us handle two cases.
@@ -14,22 +21,7 @@
 // 2. If the tab is in reader view and the user loads another url
 // that should be loaded in reader view.  This is why it is a Map and not a Set
 // of tab ids, so two back-to-back auto-reader-view pages will work correctly.
-let readerModeTabs = new Map(),
-    readerSites = [],
-    openAllSitesInReader = false,
-    nonReaderSites = [];
-
-browser.storage.onChanged.addListener((changes, area) => {
-    if (changes.readerSitesPref && changes.readerSitesPref.newValue) {
-        readerSites = changes.readerSitesPref.newValue;
-    }
-    if (changes.nonReaderSitesPref && changes.nonReaderSitesPref.newValue) {
-        nonReaderSites = changes.nonReaderSitesPref.newValue;
-    }
-    if (changes.openAllSitesInReaderPref && changes.openAllSitesInReaderPref.newValue !== undefined) {
-        openAllSitesInReader = changes.openAllSitesInReaderPref.newValue;
-    }
-});
+let readerModeTabs = new Map();
 
 function cleanUrl(url) {
     // remove 'about:reader?url=' from RV urls and unescape ':' '/' etc.
@@ -45,8 +37,7 @@ function containsUrl(paths, url) {
     return paths.find((path) => url.startsWith(path));
 }
 
-// handle tab loading
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+async function handleTabUpdated(tabId, changeInfo, tab) {
 
     // 'loading' can occur more than once for the same url/tab
     // so we use 'complete' which happens only once.
@@ -63,14 +54,18 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
         // If the user exited reader view, do not re-enter reader view.
         if (readerModeTabs.get(tabId) !== url) {
+            let options = await STORAGE.get(OPTIONS);
 
-            if (containsUrl(readerSites, url) ||
-                (openAllSitesInReader && !containsUrl(nonReaderSites, url))) {
+            if (containsUrl(options.readerSitesPref, url) ||
+                (options.openAllSitesInReaderPref &&
+                    !containsUrl(options.nonReaderSitesPref, url))) {
                 browser.tabs.toggleReaderMode(tabId);
             }
         }
     }
-});
+};
+
+browser.tabs.onUpdated.addListener(handleTabUpdated);
 
 // handle tab closing
 browser.tabs.onRemoved.addListener((tabId, removeInfo) => {

@@ -5,11 +5,6 @@
 "use strict";
 
 const STORAGE = browser.storage.local;
-const OPTIONS = [
-    "readerSitesPref",
-    "nonReaderSitesPref",
-    "openAllSitesInReaderPref"
-];
 
 // Takes a comma separated string of sites (from a pref) and returns
 // a cleaned up string.  Trims whitespace, removes empty items, etc.
@@ -55,15 +50,16 @@ document.querySelector("form").addEventListener("submit", saveOptions);
 
 async function restoreOptions() {
     try {
-        let fromStorage = await STORAGE.get(OPTIONS);
-        if (fromStorage.readerSitesPref) {
-            document.querySelector("#readerSitesPref")["value"] = fromStorage.readerSitesPref.join(', ') || "";
+        let background = browser.extension.getBackgroundPage(),
+            options = await STORAGE.get(background.OPTIONS);
+        if (options.readerSitesPref) {
+            document.querySelector("#readerSitesPref")["value"] = options.readerSitesPref.join(', ') || "";
         }
-        if (fromStorage.nonReaderSitesPref) {
-            document.querySelector("#nonReaderSitesPref")["value"] = fromStorage.nonReaderSitesPref.join(', ') || "";
+        if (options.nonReaderSitesPref) {
+            document.querySelector("#nonReaderSitesPref")["value"] = options.nonReaderSitesPref.join(', ') || "";
         }
-        if (fromStorage.openAllSitesInReaderPref) {
-            document.querySelector("#openAllSitesInReaderPref").checked = fromStorage.openAllSitesInReaderPref || false;
+        if (options.openAllSitesInReaderPref) {
+            document.querySelector("#openAllSitesInReaderPref").checked = options.openAllSitesInReaderPref || false;
         }
 
     } catch (e) {
