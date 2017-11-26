@@ -39,45 +39,50 @@ function containsUrl(paths, url) {
     return paths.find((path) => url.startsWith(path));
 }
 
-async function handleTabUpdated(tabId, changeInfo, tab) {
+async function handleTabComplete(tabId, changeInfo, tab) {
+    let storage = await STORAGE.get("readerTabs");
+    if (tab.isInReaderMode) {
+        storage.readerTabs[tabId] = cleanUrl(tab.url);
+    } else {
+        delete storage.readerTabs[tabId];
+    }
+    await STORAGE.set({
+        "readerTabs": storage.readerTabs
+    });
+}
+
+async function handleTabIsArticle(tabId, changeInfo, tab) {
+    const url = cleanUrl(tab.url),
+        storage = await STORAGE.get();
+
+    // If the user exited reader view, do not re-enter reader view.
+    if (storage.readerTabs[tabId] !== url) {
+
+        if (storage.oOpenAllInReader) {
+            if (!containsUrl(storage.oNonReaderUrls, url)) {
+                browser.tabs.toggleReaderMode(tabId);
+            }
+        } else {
+            if (containsUrl(storage.oReaderUrls, url)) {
+                browser.tabs.toggleReaderMode(tabId);
+            }
+        }
+    }
+}
+
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
     // 'loading' can occur more than once for the same url/tab
     // so we use 'complete' which happens only once.
     if (changeInfo.status === 'complete') {
-        let storage = await STORAGE.get("readerTabs");
-        if (tab.isInReaderMode) {
-            storage.readerTabs[tabId] = cleanUrl(tab.url);
-        } else {
-            delete storage.readerTabs[tabId];
-        }
-        await STORAGE.set({
-            "readerTabs": storage.readerTabs
-        });
+        handleTabComplete(tabId, changeInfo, tab);
     }
 
     if (changeInfo.isArticle && !tab.isInReaderMode) {
-        const url = cleanUrl(tab.url),
-            storage = await STORAGE.get();
-
-        // If the user exited reader view, do not re-enter reader view.
-        if (storage.readerTabs[tabId] !== url) {
-
-            if (storage.oOpenAllInReader) {
-                if (!containsUrl(storage.oNonReaderUrls, url)) {
-                    browser.tabs.toggleReaderMode(tabId);
-                }
-            } else {
-                if (containsUrl(storage.oReaderUrls, url)) {
-                    browser.tabs.toggleReaderMode(tabId);
-                }
-            }
-        }
+        handleTabIsArticle(tabId, changeInfo, tab);
     }
-};
+});
 
-browser.tabs.onUpdated.addListener(handleTabUpdated);
-
-// handle tab closing
 browser.tabs.onRemoved.addListener((tabId, removeInfo) => {
     readerTabs.delete(tabId);
 });
