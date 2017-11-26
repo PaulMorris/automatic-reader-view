@@ -89,8 +89,8 @@ async function handleInstalled(details) {
         let storage = await STORAGE.get();
         await STORAGE.clear();
         STORAGE.set({
-            oReaderUrls: storage.readerSitesPref,
-            oNonReaderUrls: storage.nonReaderSitesPref,
+            oReaderUrls: storage.readerSitesPref.map(cleanUrl),
+            oNonReaderUrls: storage.nonReaderSitesPref.map(cleanUrl),
             oOpenAllInReader: storage.openAllSitesInReaderPref,
             readerTabs: {}
         });
