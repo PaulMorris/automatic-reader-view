@@ -39,20 +39,26 @@ function containsUrl(paths, url) {
     return paths.find((path) => url.startsWith(path));
 }
 
-async function handleTabComplete(tabId, changeInfo, tab) {
-    let storage = await STORAGE.get("readerTabs");
-    if (tab.isInReaderMode) {
-        storage.readerTabs[tabId] = cleanUrl(tab.url);
-    } else {
-        delete storage.readerTabs[tabId];
+async function handleTabComplete(tabId, tabUrl, isInReaderMode) {
+    let fromStorage = await STORAGE.get("readerTabs"),
+        readerTabs = fromStorage.readerTabs;
+
+    if (isInReaderMode) {
+        readerTabs[tabId] = cleanUrl(tabUrl);
+        STORAGE.set({
+            "readerTabs": readerTabs
+        });
+
+    } else if (readerTabs[tabId]) {
+        delete readerTabs[tabId];
+        STORAGE.set({
+            "readerTabs": readerTabs
+        });
     }
-    await STORAGE.set({
-        "readerTabs": storage.readerTabs
-    });
 }
 
-async function handleTabIsArticle(tabId, changeInfo, tab) {
-    const url = cleanUrl(tab.url),
+async function handleTabIsArticle(tabId, tabUrl) {
+    const url = cleanUrl(tabUrl),
         storage = await STORAGE.get();
 
     // If the user exited reader view, do not re-enter reader view.
@@ -72,14 +78,17 @@ async function handleTabIsArticle(tabId, changeInfo, tab) {
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
+    // browser.tabs.toggleReaderMode will not work unless isArticle is true,
+    // and an addon can't open about:reader urls directly.  This means we
+    // see the page briefly before it is re-rendered in reader view.
+    if (changeInfo.isArticle && !tab.isInReaderMode) {
+        handleTabIsArticle(tabId, tab.url);
+    }
+
     // 'loading' can occur more than once for the same url/tab
     // so we use 'complete' which happens only once.
     if (changeInfo.status === 'complete') {
-        handleTabComplete(tabId, changeInfo, tab);
-    }
-
-    if (changeInfo.isArticle && !tab.isInReaderMode) {
-        handleTabIsArticle(tabId, changeInfo, tab);
+        handleTabComplete(tabId, tab.url, tab.isInReaderMode);
     }
 });
 
