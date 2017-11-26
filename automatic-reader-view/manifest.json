@@ -7,6 +7,10 @@
   "description": "Automatically load webpages in Firefox's Reader View – as the default for the websites you specify.",
   "homepage_url": "https://addons.mozilla.org/en-US/firefox/addon/automatic-reader-view/",
 
+  "options_ui": {
+    "page": "options/options.html"
+  },
+
   "background": {
     "scripts": ["background.js"]
   },

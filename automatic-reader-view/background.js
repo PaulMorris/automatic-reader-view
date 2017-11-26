@@ -19,13 +19,26 @@ let readerModeTabs = new Map(),
     openAllSitesInReader = false,
     nonReaderSites = [];
 
+browser.storage.onChanged.addListener((changes, area) => {
+    if (changes.readerSitesPref && changes.readerSitesPref.newValue) {
+        readerSites = changes.readerSitesPref.newValue;
+    }
+    if (changes.nonReaderSitesPref && changes.nonReaderSitesPref.newValue) {
+        nonReaderSites = changes.nonReaderSitesPref.newValue;
+    }
+    if (changes.openAllSitesInReaderPref && changes.openAllSitesInReaderPref.newValue !== undefined) {
+        openAllSitesInReader = changes.openAllSitesInReaderPref.newValue;
+    }
+});
+
 function cleanUrl(url) {
     // remove 'about:reader?url=' from RV urls and unescape ':' '/' etc.
     // remove trailing '?...' and '#...'
+    // remove 'http://' or 'https://'
     const trimUrl = url.startsWith('about:reader?url=') ? url.slice(17) : url,
         urlObj = new URL(unescape(trimUrl));
 
-    return urlObj.origin + urlObj.pathname;
+    return urlObj.hostname + urlObj.pathname;
 }
 
 function containsUrl(paths, url) {
@@ -45,15 +58,16 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         }
     }
 
-    if (changeInfo.isArticle &&
-        !tab.isInReaderMode &&
-        readerModeTabs.get(tabId) !== tab.url) {
-
+    if (changeInfo.isArticle && !tab.isInReaderMode) {
         const url = cleanUrl(tab.url);
 
-        if (containsUrl(readerSites, url) ||
-            (openAllSitesInReader && !containsUrl(nonReaderSites, url))) {
-            browser.tabs.toggleReaderMode(tabId);
+        // If the user exited reader view, do not re-enter reader view.
+        if (readerModeTabs.get(tabId) !== url) {
+
+            if (containsUrl(readerSites, url) ||
+                (openAllSitesInReader && !containsUrl(nonReaderSites, url))) {
+                browser.tabs.toggleReaderMode(tabId);
+            }
         }
     }
 });
