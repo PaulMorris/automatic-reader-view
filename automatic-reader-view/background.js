@@ -82,10 +82,9 @@ browser.tabs.onRemoved.addListener((tabId, removeInfo) => {
     readerTabs.delete(tabId);
 });
 
-async function handleInstalled(details) {
-
+async function handleUpdate(details) {
     // Migrate storage from version 0.2.1 (new names for options)
-    if (details.reason === "update" && details.previousVersion === "0.2.1") {
+    if (details.previousVersion === "0.2.1") {
         let storage = await STORAGE.get();
         await STORAGE.clear();
         STORAGE.set({
@@ -95,26 +94,31 @@ async function handleInstalled(details) {
             readerTabs: {}
         });
     }
+}
 
-    // Initialize storage on install.
-    if (details.reason === 'install') {
-        let storage = await STORAGE.get(),
-            defaults = {};
+async function handleInstall(details) {
+    let storage = await STORAGE.get(),
+        defaults = {};
 
-        if (storage.oReaderUrls === undefined) {
-            defaults["oReaderUrls"] = [];
-        }
-        if (storage.oNonReaderUrls === undefined) {
-            defaults["oNonReaderUrls"] = [];
-        }
-        if (storage.oOpenAllInReader === undefined) {
-            defaults["oOpenAllInReader"] = false;
-        }
-        if (storage.readerTabs === undefined) {
-            defaults["readerTabs"] = {};
-        }
-        STORAGE.set(defaults);
+    if (storage.oReaderUrls === undefined) {
+        defaults["oReaderUrls"] = [];
     }
-};
+    if (storage.oNonReaderUrls === undefined) {
+        defaults["oNonReaderUrls"] = [];
+    }
+    if (storage.oOpenAllInReader === undefined) {
+        defaults["oOpenAllInReader"] = false;
+    }
+    if (storage.readerTabs === undefined) {
+        defaults["readerTabs"] = {};
+    }
+    STORAGE.set(defaults);
+}
 
-browser.runtime.onInstalled.addListener(handleInstalled);
+browser.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "update") {
+        handleUpdate(details);
+    } else if (details.reason === 'install') {
+        handleInstall(details);
+    }
+});
