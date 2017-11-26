@@ -6,9 +6,9 @@
 
 const STORAGE = browser.storage.local;
 const OPTIONS = [
-    "readerSitesPref",
-    "nonReaderSitesPref",
-    "openAllSitesInReaderPref"
+    "oReaderUrls",
+    "oNonReaderUrls",
+    "oOpenAllInReader"
 ];
 
 // Takes a comma separated string of sites (from a pref) and returns
@@ -43,9 +43,9 @@ function getAndUpdateSiteList(selector) {
 function saveOptions(event) {
     event.preventDefault();
     STORAGE.set({
-        readerSitesPref: getAndUpdateSiteList("#readerSitesPref"),
-        nonReaderSitesPref: getAndUpdateSiteList("#nonReaderSitesPref"),
-        openAllSitesInReaderPref: document.querySelector("#openAllSitesInReaderPref").checked || false
+        oReaderUrls: getAndUpdateSiteList("#oReaderUrls"),
+        oNonReaderUrls: getAndUpdateSiteList("#oNonReaderUrls"),
+        oOpenAllInReader: document.querySelector("#oOpenAllInReader").checked || false
     });
 };
 
@@ -54,9 +54,9 @@ document.querySelector("form").addEventListener("submit", saveOptions);
 async function restoreOptions() {
     try {
         let options = await STORAGE.get(OPTIONS);
-        document.querySelector("#readerSitesPref")["value"] = options.readerSitesPref.join(', ') || "";
-        document.querySelector("#nonReaderSitesPref")["value"] = options.nonReaderSitesPref.join(', ') || "";
-        document.querySelector("#openAllSitesInReaderPref").checked = options.openAllSitesInReaderPref || false;
+        document.querySelector("#oReaderUrls")["value"] = options.oReaderUrls.join(', ') || "";
+        document.querySelector("#oNonReaderUrls")["value"] = options.oNonReaderUrls.join(', ') || "";
+        document.querySelector("#oOpenAllInReader").checked = options.oOpenAllInReader || false;
 
     } catch (e) {
         console.error(e);
