@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Automatic Reader View",
-  "version": "0.2.1",
+  "version": "1.0.0",
 
   "description": "Automatically load webpages in Firefox's Reader View – as the default for the websites you specify.",
   "homepage_url": "https://addons.mozilla.org/en-US/firefox/addon/automatic-reader-view/",
