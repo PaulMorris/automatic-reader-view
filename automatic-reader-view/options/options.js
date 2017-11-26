@@ -49,7 +49,7 @@ function saveOptions(event) {
     });
 };
 
-document.querySelector("form").addEventListener("submit", saveOptions);
+document.querySelector("form").addEventListener("change", saveOptions);
 
 async function restoreOptions() {
     try {
