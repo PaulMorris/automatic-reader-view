@@ -1,11 +1,22 @@
 {
-
   "manifest_version": 2,
   "name": "Automatic Reader View",
   "version": "0.2.1",
 
   "description": "Automatically load webpages in Firefox's Reader View – as the default for the websites you specify.",
   "homepage_url": "https://addons.mozilla.org/en-US/firefox/addon/automatic-reader-view/",
+  "author": "Paul Morris",
+
+  "applications": {
+    "gecko": {
+      "id": "@automatic-reader-view"
+    }
+  },
+
+  "icons": {
+    "32": "icons/automatic-reader-view-32x32.png",
+    "64": "icons/automatic-reader-view-64x64.png"
+  },
 
   "options_ui": {
     "page": "options/options.html"
@@ -16,5 +27,4 @@
   },
 
   "permissions": ["tabs", "storage"]
-
 }
